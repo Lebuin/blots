@@ -32,11 +32,11 @@ class testApp : public ofBaseApp{
 
 
         // Variables for the randomization.
-        float randomize_fl[3] = {1.2, 1.2, 1.2};
-        int randomize[3];
-        float drift_fl[3] = {0.08, 0.08, 0.08};
-        int drift[3];
-        const int multiplier = 100;
+        float randomize_prob[3] = {0.05, 0.05, 0.05};
+        float randomize_bias[3] = {0.0, 0.0, 0.0};
+        float randomize[3][2];
+        std::default_random_engine generator;
+        std::uniform_real_distribution<double> rand01;
 
         // The number of pixels that have to be drawn each cycle.
         int num_pixels = 100;

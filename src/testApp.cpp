@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <stdlib.h>
 #include <math.h>
+//#include <random>
 
 ofColor default_color = ofColor(0, 0, 0);
 
@@ -42,27 +43,33 @@ ofColor testApp::calculate_color(int x, int y) {
         n += this->add_color(total, canvas.get(x, y+1));
     }
 
-    //total[0] = total[0] / n;
-    //total[1] = total[1] / n;
-    //total[2] = total[2] / n;
-
-    //total[0] += rand() % (RAND-1 + min(total[0], RAND)) - min(total[0]-1, RAND-1);
-    //total[1] += rand() % (RAND-1 + min(total[1], RAND)) - min(total[1]-1, RAND-1);
-    //total[2] += rand() % (RAND-1 + min(total[2], RAND)) - min(total[2]-1, RAND-1);
-    //total[2] += rand() % 5 - 2;
-
-    //total[0] = round(1.*total[0]/n + 0.1 * (rand() % (2*randomize[0]) - randomize[0]));
-    //total[1] += (rand() % rand_mod[1] + rand_add[1]) / 1000;
-    //total[2] += (rand() % rand_mod[2] + rand_add[2]) / 1000;
-    //total[0] = round(this->rand_nozero(0) + total[0] / (float) n + drift[0]);
-
-    int add;
+    /*int add;
     for(int i = 0; i < 3; i++) {
         do {
             add = rand() % (2*randomize[i]+1) - randomize[i] + drift[i];
         } while(add % (multiplier/2) == 0);
         total[i] = round(total[i] / (float) n + add / (float) multiplier);
+    }*/
+
+    float r;
+    int small;
+    for(int i=0; i < 3; i++) {
+        if(rand() % 2 == 0) {
+            total[i] = floor(total[i] / (float) n);
+        } else {
+            total[i] = ceil(total[i] / (float) n);
+        }
+        //total[i] = round(total[i] / (float) n + small);
+
+        r = rand01(generator);
+        //cout << r << "\n";
+        if(r < randomize[i][0]) {
+            total[i]--;
+        } else if(r < randomize[i][1]) {
+            total[i]++;
+        }
     }
+
 
     return ofColor(total[0], total[1], total[2]);
 }
@@ -82,13 +89,13 @@ int testApp::add_color(int* total, ofColor color) {
     }
 }
 
-float testApp::rand_nozero(int i) {
+/*float testApp::rand_nozero(int i) {
     int result;
     do {
         result = rand() % (2*randomize[i]+1) - randomize[i];
     } while(result % (multiplier/2) == 0);
     return result / (float) multiplier;
-}
+}*/
 
 //--------------------------------------------------------------
 void testApp::setup() {
@@ -96,9 +103,16 @@ void testApp::setup() {
     canvas.add(SCR_WIDTH/2, SCR_HEIGHT/2, seed_color);
     this->add_neighbours(SCR_WIDTH/2, SCR_HEIGHT/2);
 
+    rand01 = std::uniform_real_distribution<double>(0.0,1.0);
+
     for(int i = 0; i < 3; i++) {
-        randomize[i] = randomize_fl[i] * multiplier;
-        drift[i] = drift_fl[i] * multiplier;
+        /*randomize[i] = randomize_fl[i] * multiplier;
+        drift[i] = drift_fl[i] * multiplier;*/
+
+        // randomize[i][0] is the probability to go one color value down.
+        // randomize[i][1] - randomize[i][0] is the probability to go one color value up.
+        randomize[i][0] = (randomize_prob[i]/2 - randomize_bias[i]);
+        randomize[i][1] = randomize_prob[i];
     }
 }
 
