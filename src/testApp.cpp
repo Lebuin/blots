@@ -8,68 +8,62 @@
 ofColor default_color = ofColor(0, 0, 0);
 
 void testApp::add_neighbours(int x, int y) {
-    if(x > 0 && canvas.get(x-1, y) == default_color) {
-        todo.push(x-1, y);
-    }
-    if(y > 0 && canvas.get(x, y-1) == default_color) {
-        todo.push(x, y-1);
-    }
-    if(x < SCR_WIDTH-1 && canvas.get(x+1, y) == default_color) {
-        todo.push(x+1, y);
-    }
-    if(y < SCR_HEIGHT-1 && canvas.get(x, y+1) == default_color) {
-        todo.push(x, y+1);
+    int newx, newy;
+    for(int i=0; i < NEIGHBOURS; i++) {
+        newx = x + neighbours[i].x;
+        newy = y + neighbours[i].y;
+        if(in_screen(newx, newy) && canvas.get(newx, newy) == default_color) {
+            todo.push(newx, newy);
+        }
     }
 }
-
 void testApp::add_neighbours(Coor c) {
     add_neighbours(c.x, c.y);
+}
+
+bool testApp::in_screen(int x, int y) {
+    return x >= 0 && x < SCR_WIDTH && y >= 0 && y < SCR_HEIGHT;
+}
+bool testApp::in_screen(Coor c) {
+    return in_screen(c.x, c.y);
 }
 
 ofColor testApp::calculate_color(int x, int y) {
     int n = 0;
     int total[3] = {0, 0, 0};
 
-    if(x > 0) {
-        n += this->add_color(total, canvas.get(x-1, y));
+    int newx, newy;
+    for(int i=0; i < NEIGHBOURS; i++) {
+        newx = x + neighbours[i].x;
+        newy = y + neighbours[i].y;
+        if(in_screen(newx, newy)) {
+            n += this->add_color(total, canvas.get(newx, newy));
+        }
     }
-    if(y > 0) {
-        n += this->add_color(total, canvas.get(x, y-1));
-    }
-    if(x < SCR_WIDTH-1) {
-        n += this->add_color(total, canvas.get(x+1, y));
-    }
-    if(y < SCR_WIDTH-1) {
-        n += this->add_color(total, canvas.get(x, y+1));
-    }
-
-    /*int add;
-    for(int i = 0; i < 3; i++) {
-        do {
-            add = rand() % (2*randomize[i]+1) - randomize[i] + drift[i];
-        } while(add % (multiplier/2) == 0);
-        total[i] = round(total[i] / (float) n + add / (float) multiplier);
-    }*/
 
     float r;
-    int small;
     for(int i=0; i < 3; i++) {
         if(rand() % 2 == 0) {
             total[i] = floor(total[i] / (float) n);
         } else {
             total[i] = ceil(total[i] / (float) n);
         }
-        //total[i] = round(total[i] / (float) n + small);
 
         r = rand01(generator);
-        //cout << r << "\n";
         if(r < randomize[i][0]) {
-            total[i]--;
+            if(total[i] == bound_colors[0][i]) {
+                total[i] += bound_colors[1][i] - bound_colors[0][i];
+            } else {
+                total[i]--;
+            }
         } else if(r < randomize[i][1]) {
-            total[i]++;
+            if(total[i] == bound_colors[1][i]) {
+                total[i] -= bound_colors[1][i] - bound_colors[0][i];
+            } else {
+                total[i]++;
+            }
         }
     }
-
 
     return ofColor(total[0], total[1], total[2]);
 }
@@ -89,19 +83,11 @@ int testApp::add_color(int* total, ofColor color) {
     }
 }
 
-/*float testApp::rand_nozero(int i) {
-    int result;
-    do {
-        result = rand() % (2*randomize[i]+1) - randomize[i];
-    } while(result % (multiplier/2) == 0);
-    return result / (float) multiplier;
-}*/
-
 //--------------------------------------------------------------
 void testApp::setup() {
     // Seed the animation.
-    canvas.add(SCR_WIDTH/2, SCR_HEIGHT/2, seed_color);
-    this->add_neighbours(SCR_WIDTH/2, SCR_HEIGHT/2);
+    canvas.add(start_point, seed_color);
+    this->add_neighbours(start_point);
 
     rand01 = std::uniform_real_distribution<double>(0.0,1.0);
 
